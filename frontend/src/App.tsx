@@ -1,8 +1,15 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import { fetchBandwidth } from './api';
 
 function App() {
+  React.useEffect(() => {
+    fetchBandwidth({ from: 1586072930418, to: 1587052130418 }).then(
+      console.log
+    );
+  }, []);
+
   return (
     <div className="App">
       <header className="App-header">
