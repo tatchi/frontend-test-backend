@@ -1,7 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
+
+app.use(cors());
 
 // Settings
 const SERVER_PORT = 3000; // Listening port
@@ -70,7 +73,6 @@ for (const data of bandwidthData.values()) {
   }
 }
 
-
 // Remove unused fields from raw data
 countryData = countryData.map((entry) => {
   return {
@@ -85,7 +87,7 @@ ispData = ispData.map((entry) => {
     cdn: entry.cdn,
     p2p: entry.p2p,
     isp: entry.isp,
-  }
+  };
 });
 
 platformData = platformData.map((entry) => {
@@ -96,7 +98,7 @@ platformData = platformData.map((entry) => {
     upload: entry.upload,
     max_viewers: entry.maxViewers,
     average_viewers: entry.averageViewers,
-  }
+  };
 });
 
 // Filter data on each key
@@ -115,7 +117,12 @@ for (const key of streamData.keys()) {
 }
 
 console.log('[INIT] Processed data...');
-console.log('[INFO] Finished processing data, data available from ' + `${new Date(audienceData.get(0).audience[0][0]).toString()}` + ' to ' + `${new Date(Date.now()).toString()}`);
+console.log(
+  '[INFO] Finished processing data, data available from ' +
+    `${new Date(audienceData.get(0).audience[0][0]).toString()}` +
+    ' to ' +
+    `${new Date(Date.now()).toString()}`
+);
 
 // Failure dice rollin'
 function rollDice() {
@@ -131,7 +138,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (request, response) => {
-  response.send('<pre>Check out README.md for more details on this mock backend server :D</pre>');
+  response.send(
+    '<pre>Check out README.md for more details on this mock backend server :D</pre>'
+  );
   console.log('GET, / 200');
 });
 
@@ -139,7 +148,7 @@ app.get('/', (request, response) => {
 app.post('/auth', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /auth 503');
     return;
   }
@@ -156,13 +165,15 @@ app.post('/auth', (request, response) => {
   if (userData && userData.password === request.body.password) {
     // Check if user has already logged in
     if (userSet.has(request.body.identifiant)) {
-      response.status(403).send("User already logged in");
+      response.status(403).send('User already logged in');
       console.log('POST, /auth 403');
       return;
     }
 
     // Generate and store token
-    const token = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(16);
+    const token = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(
+      16
+    );
 
     // Add user to authentication map
     authMap.set(token, request.body.identifiant);
@@ -180,7 +191,7 @@ app.post('/auth', (request, response) => {
 app.post('/logout', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /logout 503');
     return;
   }
@@ -208,7 +219,7 @@ app.post('/logout', (request, response) => {
 app.post('/myinfo', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /myinfo 503');
     return;
   }
@@ -239,13 +250,17 @@ app.post('/myinfo', (request, response) => {
 app.post('/updatepwd', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /updatepwd 503');
     return;
   }
 
   // Check parameters
-  if (!request.body.session_token || !request.body.old_password || !request.body.new_password) {
+  if (
+    !request.body.session_token ||
+    !request.body.old_password ||
+    !request.body.new_password
+  ) {
     response.status(400).send();
     console.log('POST, /updatepwd 400');
     return;
@@ -261,7 +276,7 @@ app.post('/updatepwd', (request, response) => {
       userData.password = request.body.new_password;
       response.send();
     } else {
-      response.status(400).send("Bad old password");
+      response.status(400).send('Bad old password');
       console.log('POST, /updatepwd 403');
     }
   } else {
@@ -274,7 +289,7 @@ app.post('/updatepwd', (request, response) => {
 app.post('/updateinfo', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /updateinfo 503');
     return;
   }
@@ -290,7 +305,14 @@ app.post('/updateinfo', (request, response) => {
   const userId = authMap.get(request.body.session_token);
   if (userId) {
     // We are pretty sure this is the right guy, update his profile
-    const allowedNames = new Set(['company', 'fname', 'lname', 'email', 'website', 'description']);
+    const allowedNames = new Set([
+      'company',
+      'fname',
+      'lname',
+      'email',
+      'website',
+      'description',
+    ]);
     const userData = clientData[userId];
     for (const key of Object.keys(request.body)) {
       if (allowedNames.has(key)) {
@@ -308,7 +330,7 @@ app.post('/updateinfo', (request, response) => {
 app.post('/notifications', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /notifications 503');
     return;
   }
@@ -336,7 +358,7 @@ app.post('/notifications', (request, response) => {
 app.post('/countries', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /countries 503');
     return;
   }
@@ -362,7 +384,7 @@ app.post('/countries', (request, response) => {
 app.post('/isps', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /isps 503');
     return;
   }
@@ -388,7 +410,7 @@ app.post('/isps', (request, response) => {
 app.post('/platforms', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /platforms 503');
     return;
   }
@@ -414,7 +436,7 @@ app.post('/platforms', (request, response) => {
 app.post('/streams', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /streams 503');
     return;
   }
@@ -440,7 +462,7 @@ app.post('/streams', (request, response) => {
 app.post('/bandwidth', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /bandwidth 503');
     return;
   }
@@ -453,13 +475,13 @@ app.post('/bandwidth', (request, response) => {
   }
 
   // Check session validity
-  const userId = "urtoob";
+  const userId = 'urtoob';
   if (userId) {
     // Slice out the data we need"
     const wholeData = bandwidthData.get(clientData[userId].clientid);
     const fromTimestamp = request.body.from;
     const toTimestamp = request.body.to;
-    const slicedData = { cdn: [], p2p: []};
+    const slicedData = { cdn: [], p2p: [] };
     for (const key of ['cdn', 'p2p']) {
       for (const entry of wholeData[key]) {
         if (entry[0] >= fromTimestamp && entry[0] <= toTimestamp) {
@@ -473,7 +495,7 @@ app.post('/bandwidth', (request, response) => {
       response.send(slicedData);
     } else {
       if (slicedData.cdn.length === 0 || slicedData.p2p.length === 0) {
-        response.status(404).send("No data available in requested time range");
+        response.status(404).send('No data available in requested time range');
         console.log('POST, /bandwidth 404');
         return;
       }
@@ -495,17 +517,19 @@ app.post('/bandwidth', (request, response) => {
           };
           break;
         case 'min':
-        aggregateFunc = (arr) => {
-          return arr.reduce((accumulator, value) => {
-            return accumulator > value ? value : accumulator;
-          }, Number.MAX_SAFE_INTEGER);
-        };
+          aggregateFunc = (arr) => {
+            return arr.reduce((accumulator, value) => {
+              return accumulator > value ? value : accumulator;
+            }, Number.MAX_SAFE_INTEGER);
+          };
           break;
         case 'average':
           aggregateFunc = (arr) => {
-            return arr.length ? arr.reduce((accumulator, value) => {
-              return accumulator + value;
-            }, 0) / arr.length : 0;
+            return arr.length
+              ? arr.reduce((accumulator, value) => {
+                  return accumulator + value;
+                }, 0) / arr.length
+              : 0;
           };
           break;
         default:
@@ -528,7 +552,7 @@ app.post('/bandwidth', (request, response) => {
 app.post('/audience', (request, response) => {
   // Dice of death
   if (!rollDice()) {
-    response.status(503).send("Server failure");
+    response.status(503).send('Server failure');
     console.log('POST, /audience 503');
     return;
   }
@@ -541,7 +565,7 @@ app.post('/audience', (request, response) => {
   }
 
   // Check session validity
-  const userId = "urtoob"
+  const userId = 'urtoob';
   if (userId) {
     // Slice out the data we need
     const wholeData = audienceData.get(clientData[userId].clientid);
@@ -561,7 +585,7 @@ app.post('/audience', (request, response) => {
       response.send(slicedData);
     } else {
       if (slicedData.audience.length === 0) {
-        response.status(404).send("No data available in requested time range");
+        response.status(404).send('No data available in requested time range');
         console.log('POST, /audience 404');
         return;
       }
@@ -583,17 +607,19 @@ app.post('/audience', (request, response) => {
           };
           break;
         case 'min':
-        aggregateFunc = (arr) => {
-          return arr.reduce((accumulator, value) => {
-            return accumulator > value ? value : accumulator;
-          }, Number.MAX_SAFE_INTEGER);
-        };
+          aggregateFunc = (arr) => {
+            return arr.reduce((accumulator, value) => {
+              return accumulator > value ? value : accumulator;
+            }, Number.MAX_SAFE_INTEGER);
+          };
           break;
         case 'average':
           aggregateFunc = (arr) => {
-            return arr.length ? arr.reduce((accumulator, value) => {
-              return accumulator + value;
-            }, 0) / arr.length : 0;
+            return arr.length
+              ? arr.reduce((accumulator, value) => {
+                  return accumulator + value;
+                }, 0) / arr.length
+              : 0;
           };
           break;
         default:
@@ -613,5 +639,7 @@ app.post('/audience', (request, response) => {
 
 // Start listen to requests
 app.listen(SERVER_PORT, () => {
-  console.log(`[INFO] Mock Streamroot API rock and rollin' at port ${SERVER_PORT}!!!`);
+  console.log(
+    `[INFO] Mock Streamroot API rock and rollin' at port ${SERVER_PORT}!!!`
+  );
 });
