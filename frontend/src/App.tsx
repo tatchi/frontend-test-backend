@@ -7,6 +7,8 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Brush,
+  Surface,
   ResponsiveContainer,
   Label,
   TooltipProps,
@@ -116,10 +118,8 @@ const ContentTooltip: React.FC<TooltipProps> = (props) => {
             &nbsp;Gbps
           </span>
         </div>
-        <div style={{marginTop: 8}}>
-          <span style={{ color: 'grey' }}>
-            Spike reduction:
-          </span>{' '}
+        <div style={{ marginTop: 8 }}>
+          <span style={{ color: 'grey' }}>Spike reduction:</span>{' '}
           <span style={{ color: payload[0].color }}>
             {((Number(payload[0].value) / total) * 100).toFixed(2)}&nbsp;%
           </span>
@@ -130,14 +130,20 @@ const ContentTooltip: React.FC<TooltipProps> = (props) => {
 };
 
 function App() {
-  const [
-    bandwidth,
-    setBandwidth,
-  ] = React.useState<FetchBandwidthResponse | null>(null);
+  const [bandwidth, setBandwidth] = React.useState<FetchBandwidthResponse>({
+    cdn: [],
+    p2p: [],
+  });
   const [maxBandwidth, setMaxBandwidth] = React.useState<{
     cdn: number;
     p2p: number;
   } | null>(null);
+
+  const [timelineIndexes, setTimelineIndexes] = React.useState({
+    startIndex: 0,
+    endIndex: 0,
+  });
+
   React.useEffect(() => {
     Promise.all([
       fetchBandwidth({
@@ -157,6 +163,14 @@ function App() {
       });
     });
   }, []);
+
+  React.useEffect(() => {
+    const { cdn = [] } = bandwidth;
+    setTimelineIndexes({
+      startIndex: 0,
+      endIndex: Math.max(0, cdn.length - 1),
+    });
+  }, [bandwidth]);
 
   const areaChartData = React.useMemo(() => {
     if (!bandwidth) return [];
@@ -220,10 +234,13 @@ function App() {
     );
   };
 
-  console.log(maxBandwidth?.cdn);
-
   return (
     <div className="App" style={{ width: '100%', height: 300 }}>
+      <button
+        onClick={() => setTimelineIndexes({ startIndex: 50, endIndex: 100 })}
+      >
+        click
+      </button>
       <ResponsiveContainer>
         <AreaChart
           data={areaChartData}
@@ -281,6 +298,14 @@ function App() {
               {`Maximum throughput: ${maxBandwidth?.p2p.toFixed(2)} Gbps`}
             </Label>
           </ReferenceLine>
+            <Brush
+              startIndex={timelineIndexes.startIndex}
+              endIndex={timelineIndexes.endIndex}
+              width={400}
+              height={40}
+              data={areaChartData}
+              onChange={setTimelineIndexes}
+            />
         </AreaChart>
       </ResponsiveContainer>
     </div>
