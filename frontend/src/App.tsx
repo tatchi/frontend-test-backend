@@ -44,18 +44,6 @@ const CustomYAxisTick = (props: any) => {
   );
 };
 
-const CustomTooltip: React.FC<TooltipProps> = ({ active, payload, label }) => {
-  if (active) {
-    return (
-      <div className="recharts-curve recharts-tooltip-cursor">
-        <p className="desc">Anything you want can be displayed here.</p>
-      </div>
-    );
-  }
-
-  return null;
-};
-
 const ContentTooltip: React.FC<TooltipProps> = (props) => {
   const { active, label = '', payload = [] } = props;
   if (!active) return null;
