@@ -122,7 +122,7 @@ const ContentTooltip: React.FC<TooltipProps> = (props) => {
           <span style={{ color: 'grey' }}>
             Spike reduction:
           </span>{' '}
-          <span style={{ color: 'green' }}>
+          <span style={{ color: payload[0].color }}>
             {((Number(payload[0].value) / total) * 100).toFixed(2)}&nbsp;%
           </span>
         </div>
