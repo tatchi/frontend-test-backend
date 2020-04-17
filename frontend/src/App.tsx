@@ -3,13 +3,18 @@ import './App.css';
 import {
   AreaChart,
   Area,
-  CartesianGrid,
+  ReferenceLine,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  Label,
 } from 'recharts';
-import { fetchBandwidth, FetchBandwidthResponse } from './api';
+import {
+  fetchBandwidth,
+  FetchBandwidthResponse,
+  fetchAggregatedBandwidth,
+} from './api';
 
 const formatTimestamp = (timestamp: number) => {
   const date = new Date(timestamp);
@@ -41,11 +46,28 @@ function App() {
     bandwidth,
     setBandwidth,
   ] = React.useState<FetchBandwidthResponse | null>(null);
+  const [maxBandwidth, setMaxBandwidth] = React.useState<{
+    cdn: number;
+    p2p: number;
+  } | null>(null);
   React.useEffect(() => {
-    fetchBandwidth({
-      from: 1586072930418,
-      to: 1587052130418,
-    }).then(setBandwidth);
+    Promise.all([
+      fetchBandwidth({
+        from: 1586072930418,
+        to: 1587052130418,
+      }),
+      fetchAggregatedBandwidth({
+        from: 1586072930418,
+        to: 1587052130418,
+        aggregate: 'max',
+      }),
+    ]).then(([bandwidth, maxBandwidth]) => {
+      setBandwidth(bandwidth);
+      setMaxBandwidth({
+        cdn: maxBandwidth.cdn * 1e-9,
+        p2p: maxBandwidth.p2p * 1e-9,
+      });
+    });
   }, []);
 
   const areaChartData = React.useMemo(() => {
@@ -54,6 +76,7 @@ function App() {
     const dates = new Set<string>();
     return cdn.map(([timestamp, cdn], index) => {
       const formattedDate = formatTimestamp(timestamp);
+
       const result = {
         timestamp,
         cdn: cdn * 1e-9,
@@ -99,7 +122,7 @@ function App() {
           stroke="none"
           fill="#666"
           className="recharts-text recharts-cartesian-axis-tick-value"
-          text-anchor="middle"
+          textAnchor="middle"
         >
           <tspan x={x} dy={16}>
             {areaChartData[props.index].date}
@@ -109,7 +132,7 @@ function App() {
     );
   };
 
-  console.log(areaChartData);
+  console.log(maxBandwidth?.cdn);
 
   return (
     <div className="App" style={{ width: '100%', height: 300 }}>
@@ -134,18 +157,41 @@ function App() {
           <Tooltip />
           <Area
             type="monotone"
-            dataKey="cdn"
-            stackId="1"
-            stroke="#8884d8"
-            fill="#8884d8"
+            dataKey="p2p"
+            stackId="2"
+            stroke="#40A3D4"
+            strokeWidth={2}
+            fill="#6AB8DD"
           />
           <Area
             type="monotone"
-            dataKey="p2p"
+            dataKey="cdn"
             stackId="1"
-            stroke="#82ca9d"
-            fill="#82ca9d"
+            stroke="#B2125C"
+            strokeWidth={2}
+            fill="#C54D85"
           />
+          <ReferenceLine
+            y={maxBandwidth?.cdn}
+            stroke="#B2125C"
+            strokeDasharray="5 3"
+            strokeWidth={2}
+          >
+            <Label position="insideLeft" dy={-10} fontSize={14}>
+              {`Maximum CDN contribution: ${maxBandwidth?.cdn.toFixed(2)} Gbps`}
+            </Label>
+          </ReferenceLine>
+          <ReferenceLine
+            y={maxBandwidth?.p2p}
+            stroke="green"
+            strokeDasharray="5 3"
+            strokeWidth={2}
+            position="start"
+          >
+            <Label position="insideRight" dy={-10} fontSize={14}>
+              {`Maximum throughput: ${maxBandwidth?.p2p.toFixed(2)} Gbps`}
+            </Label>
+          </ReferenceLine>
         </AreaChart>
       </ResponsiveContainer>
     </div>
