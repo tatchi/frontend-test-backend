@@ -1,21 +1,21 @@
 const BACKEND_URL = 'http://localhost:3000';
 
-type FetchBandwidthInput = {
+export type FetchBandwidthInput = {
   from: number;
   to: number;
 };
 
-type FetchAggregatedBandwidthInput = {
+export type FetchAggregatedBandwidthInput = {
   from: number;
   to: number;
   aggregate: 'sum' | 'averagre' | 'max' | 'min';
 };
 
-type FetchBandwidthResponse = {
+export type FetchBandwidthResponse = {
   cdn: [number, number][];
   p2p: [number, number][];
 };
-type FetchBandwidthAggregatedResponse = {
+export type FetchBandwidthAggregatedResponse = {
   cdn: number;
   p2p: number;
 };
