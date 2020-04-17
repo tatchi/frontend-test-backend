@@ -58,8 +58,6 @@ const ContentTooltip: React.FC<TooltipProps> = (props) => {
   const { active, label = '', payload = [] } = props;
   if (!active) return null;
 
-  console.log(props);
-
   const total = Number(payload[0].value) + Number(payload[1].value);
 
   return (
