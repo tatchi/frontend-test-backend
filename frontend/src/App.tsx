@@ -179,9 +179,12 @@ function App() {
   }, [bandwidth]);
 
   const CustomizedXAxisTick = (props: any) => {
-    const { x, y } = props;
+    const { x, y, payload } = props;
 
-    if (!areaChartData[props.index]?.date) {
+    const date = areaChartData.find((data) => data.timestamp === payload.value)
+      ?.date;
+
+    if (!date) {
       return null;
     }
 
@@ -205,7 +208,6 @@ function App() {
         <text
           type="category"
           orientation="bottom"
-          width="1560"
           height="30"
           x={x}
           y={y}
@@ -215,7 +217,7 @@ function App() {
           textAnchor="middle"
         >
           <tspan x={x} dy={16}>
-            {areaChartData[props.index].date}
+            {date}
           </tspan>
         </text>
       </>
@@ -286,14 +288,27 @@ function App() {
               {`Maximum throughput: ${maxBandwidth?.p2p.toFixed(2)} Gbps`}
             </Label>
           </ReferenceLine>
-            <Brush
-              startIndex={timelineIndexes.startIndex}
-              endIndex={timelineIndexes.endIndex}
-              width={400}
-              height={40}
-              data={areaChartData}
-              onChange={setTimelineIndexes}
-            />
+          <Brush
+            startIndex={timelineIndexes.startIndex}
+            endIndex={timelineIndexes.endIndex}
+            width={400}
+            height={40}
+            dataKey="timestamp"
+            tickFormatter={formatTimestamp}
+            data={areaChartData}
+            onChange={setTimelineIndexes}
+          >
+            <AreaChart width={400} height={300} data={areaChartData}>
+              <Area
+                type="monotone"
+                dataKey="p2p"
+                stackId="2"
+                stroke="#40A3D4"
+                strokeWidth={2}
+                fill="#6AB8DD"
+              />
+            </AreaChart>
+          </Brush>
         </AreaChart>
       </ResponsiveContainer>
     </div>
