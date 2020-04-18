@@ -59,9 +59,14 @@ function App() {
     };
   });
 
+  /** Fetch both bandwidth data (cdn and p2p) as well as their aggregated max value
+   * We could have have derived that max value from the bandwidth data instead
+   * of making an extra http request.
+   */
   React.useEffect(() => {
     const from = dateFilter.from.getTime();
     const to = dateFilter.to.getTime();
+    // Wait for both promises to resolve
     Promise.all([
       fetchBandwidth({
         from,
@@ -81,6 +86,9 @@ function App() {
     });
   }, [dateFilter]);
 
+  /** Compute data in a way which is consumable by
+   * the AreaChart
+   */
   const areaChartData = React.useMemo(() => {
     if (!bandwidth) return [];
     const { cdn, p2p } = bandwidth;
@@ -102,6 +110,13 @@ function App() {
               dataKey="timestamp"
               type="category"
               interval="preserveStartEnd"
+              /* Arbitrary value here. Can be improved since currently we
+                can have multiple time the same tick value (ie 17.Apr) or skip one 
+                or multiple of them. At a certain point I used a `CustomizedXAxisTick` to 
+                handle that but it turns out to make ticks overlap each other when the screen becomes smaller.
+                I chose to remove it because the added complexity was probably not worth it.
+                See commit #e08d24011a7269bdf86397e63ec097711ad42226 
+              */
               minTickGap={90}
               tickFormatter={formatTimestamp}
             />
@@ -168,7 +183,7 @@ function App() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <div>
+      <div style={{marginTop: 30, marginLeft: 30}}>
         <DateRangePicker
           {...dateFilter}
           onFromDateChange={(from) => setDateFilter({ ...dateFilter, from })}

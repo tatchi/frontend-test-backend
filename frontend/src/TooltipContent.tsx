@@ -4,7 +4,7 @@ import { formatGbps } from './utils';
 
 export const TooltipContent: React.FC<TooltipProps> = (props) => {
   const { active, label = '', payload = [] } = props;
-  if (!active) return null;
+  if (!active || !payload) return null;
 
   const p2p = Number(payload[0].value);
   const cdn = Number(payload[1].value);
