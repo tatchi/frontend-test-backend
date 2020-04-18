@@ -4,7 +4,8 @@
   "description": "Simple(?) mock backend for Streamroot frontend dev test",
   "main": "mock-backend.js",
   "scripts": {
-    "start": "nodemon mock-backend.js"
+    "start:server": "nodemon mock-backend.js",
+    "start:client": "cd frontend && yarn start"
   },
   "author": "Tri NGUYEN",
   "license": "UNLICENSED",
