@@ -8,7 +8,6 @@ import {
   YAxis,
   Tooltip,
   Brush,
-  Surface,
   ResponsiveContainer,
   Label,
   TooltipProps,
@@ -178,52 +177,6 @@ function App() {
     });
   }, [bandwidth]);
 
-  const CustomizedXAxisTick = (props: any) => {
-    const { x, y, payload } = props;
-
-    const date = areaChartData.find((data) => data.timestamp === payload.value)
-      ?.date;
-
-    if (!date) {
-      return null;
-    }
-
-    return (
-      <>
-        <line
-          type="category"
-          orientation="bottom"
-          width="1560"
-          height="30"
-          x="90"
-          y="270"
-          className="recharts-cartesian-axis-tick-line"
-          stroke="#666"
-          fill="none"
-          x1={x}
-          y1={y - 2}
-          x2={x}
-          y2={y - 8}
-        ></line>
-        <text
-          type="category"
-          orientation="bottom"
-          height="30"
-          x={x}
-          y={y}
-          stroke="none"
-          fill="#666"
-          className="recharts-text recharts-cartesian-axis-tick-value"
-          textAnchor="middle"
-        >
-          <tspan x={x} dy={16}>
-            {date}
-          </tspan>
-        </text>
-      </>
-    );
-  };
-
   return (
     <div className="App" style={{ width: '100%', height: 300 }}>
       <ResponsiveContainer>
@@ -239,9 +192,9 @@ function App() {
           <XAxis
             dataKey="timestamp"
             type="category"
-            interval={0}
-            tickLine={false}
-            tick={<CustomizedXAxisTick />}
+            interval="preserveStartEnd"
+            minTickGap={90}
+            tickFormatter={formatTimestamp}
           />
           <YAxis tick={<CustomYAxisTick />} />
           <Tooltip content={<ContentTooltip />} />
