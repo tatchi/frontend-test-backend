@@ -1,5 +1,6 @@
 import * as React from 'react';
 import DayPickerInput from 'react-day-picker/DayPickerInput';
+import { addDays, removeDays } from './utils';
 
 export const DateRangePicker: React.FC<{
   from: Date | undefined;
@@ -25,8 +26,9 @@ export const DateRangePicker: React.FC<{
             selectedDays: [from, from && to && { from: from, to: to }],
             disabledDays: {
               // Server generate data up to 15 days before
-              before: new Date(new Date(now).setDate(now.getDate() - 15)),
-              after: to,
+              before: removeDays(now, 15),
+              // `from` must be different than `to`. So it can be max `to-1`
+              after: to ? removeDays(to, 1) : removeDays(now, 1),
             },
             toMonth: to,
             modifiers,
@@ -50,7 +52,10 @@ export const DateRangePicker: React.FC<{
           dayPickerProps={{
             selectedDays: [from, from && to && { from: from, to: to }],
             disabledDays: {
-              before: from,
+              before: from
+                ? // `to` must be different than `from`. So it can be minimun `from+1`
+                  addDays(from, 1)
+                : removeDays(now, 14),
               after: now,
             },
             modifiers,
