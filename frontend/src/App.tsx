@@ -1,5 +1,6 @@
 import React from 'react';
 import './App.css';
+import 'react-day-picker/lib/style.css';
 import {
   AreaChart,
   Area,
@@ -12,6 +13,8 @@ import {
   Label,
   TooltipProps,
 } from 'recharts';
+import DayPicker from 'react-day-picker';
+import DayPickerInput from 'react-day-picker/DayPickerInput';
 import {
   fetchBandwidth,
   FetchBandwidthResponse,
@@ -117,6 +120,7 @@ const ContentTooltip: React.FC<TooltipProps> = (props) => {
 };
 
 function App() {
+  const dayToPicker = React.useRef<DayPickerInput>(null);
   const [bandwidth, setBandwidth] = React.useState<FetchBandwidthResponse>({
     cdn: [],
     p2p: [],
@@ -124,22 +128,28 @@ function App() {
   const [maxBandwidth, setMaxBandwidth] = React.useState<{
     cdn: number;
     p2p: number;
-  } | null>(null);
+  }>({ cdn: 0, p2p: 0 });
 
-  const [timelineIndexes, setTimelineIndexes] = React.useState({
-    startIndex: 0,
-    endIndex: 0,
+  const now = new Date(Date.now());
+  const [dateFilter, setDateFilter] = React.useState(() => {
+    const from = new Date(new Date(now).setDate(now.getDate() - 10));
+    return {
+      from,
+      to: now,
+    };
   });
 
   React.useEffect(() => {
+    const from = dateFilter.from.getTime();
+    const to = dateFilter.to.getTime();
     Promise.all([
       fetchBandwidth({
-        from: 1586072930418,
-        to: 1587052130418,
+        from,
+        to,
       }),
       fetchAggregatedBandwidth({
-        from: 1586072930418,
-        to: 1587052130418,
+        from,
+        to,
         aggregate: 'max',
       }),
     ]).then(([bandwidth, maxBandwidth]) => {
@@ -149,116 +159,142 @@ function App() {
         p2p: maxBandwidth.p2p * 1e-9,
       });
     });
-  }, []);
-
-  React.useEffect(() => {
-    const { cdn = [] } = bandwidth;
-    setTimelineIndexes({
-      startIndex: 0,
-      endIndex: Math.max(0, cdn.length - 1),
-    });
-  }, [bandwidth]);
+  }, [dateFilter]);
 
   const areaChartData = React.useMemo(() => {
     if (!bandwidth) return [];
     const { cdn, p2p } = bandwidth;
-    const dates = new Set<string>();
     return cdn.map(([timestamp, cdn], index) => {
-      const formattedDate = formatTimestamp(timestamp);
-
-      const result = {
+      return {
         timestamp,
         cdn: cdn * 1e-9,
         p2p: p2p[index][1] * 1e-9,
-        date: dates.has(formattedDate) ? '' : formattedDate,
       };
-      dates.add(formattedDate);
-      return result;
     });
   }, [bandwidth]);
 
   return (
-    <div className="App" style={{ width: '100%', height: 300 }}>
-      <ResponsiveContainer>
-        <AreaChart
-          data={areaChartData}
-          margin={{
-            top: 30,
-            right: 30,
-            left: 30,
-            bottom: 0,
+    <div style={{ padding: 30 }}>
+      <div className="App" style={{ width: '100%', height: 300 }}>
+        <ResponsiveContainer>
+          <AreaChart data={areaChartData} margin={{ top: 40 }}>
+            <XAxis
+              dataKey="timestamp"
+              type="category"
+              interval="preserveStartEnd"
+              minTickGap={90}
+              tickFormatter={formatTimestamp}
+            />
+            <YAxis tick={<CustomYAxisTick />} />
+            <Tooltip content={<ContentTooltip />} />
+            <Area
+              type="monotone"
+              dataKey="p2p"
+              stackId="2"
+              stroke="#40A3D4"
+              strokeWidth={2}
+              fill="#6AB8DD"
+            />
+            <Area
+              type="monotone"
+              dataKey="cdn"
+              name="http"
+              stackId="1"
+              stroke="#B2125C"
+              strokeWidth={2}
+              fill="#C54D85"
+            />
+            <ReferenceLine
+              y={maxBandwidth?.cdn}
+              stroke="#B2125C"
+              strokeDasharray="5 3"
+              strokeWidth={2}
+            >
+              <Label position="insideLeft" dy={-10} fontSize={14}>
+                {`Maximum CDN contribution: ${maxBandwidth?.cdn.toFixed(
+                  2
+                )} Gbps`}
+              </Label>
+            </ReferenceLine>
+            <ReferenceLine
+              y={maxBandwidth?.p2p}
+              stroke="green"
+              strokeDasharray="5 3"
+              strokeWidth={2}
+              position="start"
+            >
+              <Label position="insideRight" dy={-10} fontSize={14}>
+                {`Maximum throughput: ${maxBandwidth?.p2p.toFixed(2)} Gbps`}
+              </Label>
+            </ReferenceLine>
+            <Brush
+              width={400}
+              height={40}
+              dataKey="timestamp"
+              tickFormatter={formatTimestamp}
+              data={areaChartData}
+            >
+              <AreaChart width={400} height={300} data={areaChartData}>
+                <Area
+                  type="monotone"
+                  dataKey="p2p"
+                  stackId="2"
+                  stroke="#40A3D4"
+                  strokeWidth={2}
+                  fill="#6AB8DD"
+                />
+              </AreaChart>
+            </Brush>
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+      <div>
+        <DayPickerInput
+          value={dateFilter.from}
+          placeholder="From"
+          formatDate={(date) => date.toLocaleDateString()}
+          dayPickerProps={{
+            selectedDays: [
+              dateFilter.from,
+              { from: dateFilter.from, to: dateFilter.to },
+            ],
+            disabledDays: {
+              before: new Date(new Date(now).setDate(now.getDate() - 15)),
+              after: dateFilter.to,
+            },
+            toMonth: dateFilter.to,
+            modifiers: { start: dateFilter.from, end: dateFilter.to },
+            numberOfMonths: 1,
+            onDayClick: () => {
+              if (dayToPicker.current !== null) {
+                dayToPicker.current.getInput().focus();
+              }
+            },
           }}
-        >
-          <XAxis
-            dataKey="timestamp"
-            type="category"
-            interval="preserveStartEnd"
-            minTickGap={90}
-            tickFormatter={formatTimestamp}
-          />
-          <YAxis tick={<CustomYAxisTick />} />
-          <Tooltip content={<ContentTooltip />} />
-          <Area
-            type="monotone"
-            dataKey="p2p"
-            stackId="2"
-            stroke="#40A3D4"
-            strokeWidth={2}
-            fill="#6AB8DD"
-          />
-          <Area
-            type="monotone"
-            dataKey="cdn"
-            name="http"
-            stackId="1"
-            stroke="#B2125C"
-            strokeWidth={2}
-            fill="#C54D85"
-          />
-          <ReferenceLine
-            y={maxBandwidth?.cdn}
-            stroke="#B2125C"
-            strokeDasharray="5 3"
-            strokeWidth={2}
-          >
-            <Label position="insideLeft" dy={-10} fontSize={14}>
-              {`Maximum CDN contribution: ${maxBandwidth?.cdn.toFixed(2)} Gbps`}
-            </Label>
-          </ReferenceLine>
-          <ReferenceLine
-            y={maxBandwidth?.p2p}
-            stroke="green"
-            strokeDasharray="5 3"
-            strokeWidth={2}
-            position="start"
-          >
-            <Label position="insideRight" dy={-10} fontSize={14}>
-              {`Maximum throughput: ${maxBandwidth?.p2p.toFixed(2)} Gbps`}
-            </Label>
-          </ReferenceLine>
-          <Brush
-            startIndex={timelineIndexes.startIndex}
-            endIndex={timelineIndexes.endIndex}
-            width={400}
-            height={40}
-            dataKey="timestamp"
-            tickFormatter={formatTimestamp}
-            data={areaChartData}
-            onChange={setTimelineIndexes}
-          >
-            <AreaChart width={400} height={300} data={areaChartData}>
-              <Area
-                type="monotone"
-                dataKey="p2p"
-                stackId="2"
-                stroke="#40A3D4"
-                strokeWidth={2}
-                fill="#6AB8DD"
-              />
-            </AreaChart>
-          </Brush>
-        </AreaChart>
-      </ResponsiveContainer>
+          onDayChange={(value) => setDateFilter({ ...dateFilter, from: value })}
+        />
+        <DayPickerInput
+          ref={dayToPicker}
+          value={dateFilter.to}
+          placeholder="To"
+          formatDate={(date) => date.toLocaleDateString()}
+          dayPickerProps={{
+            selectedDays: [
+              dateFilter.from,
+              { from: dateFilter.from, to: dateFilter.to },
+            ],
+            disabledDays: {
+              before: dateFilter.from,
+              after: now,
+            },
+            modifiers: { start: dateFilter.from, end: dateFilter.to },
+            month: dateFilter.from,
+            fromMonth: dateFilter.from,
+            numberOfMonths: 2,
+          }}
+          onDayChange={(value) => setDateFilter({ ...dateFilter, to: value })}
+        />
+      </div>
     </div>
   );
 }
