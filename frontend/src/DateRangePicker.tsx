@@ -2,10 +2,10 @@ import * as React from 'react';
 import DayPickerInput from 'react-day-picker/DayPickerInput';
 
 export const DateRangePicker: React.FC<{
-  from: Date;
-  to: Date;
-  onFromDateChange: (date: Date) => void;
-  onToDateChange: (date: Date) => void;
+  from: Date | undefined;
+  to: Date | undefined;
+  onFromDateChange: (date: Date | undefined) => void;
+  onToDateChange: (date: Date | undefined) => void;
 }> = ({ from, to, onFromDateChange, onToDateChange }) => {
   const dayToPicker = React.useRef<DayPickerInput>(null);
 
@@ -22,7 +22,7 @@ export const DateRangePicker: React.FC<{
           placeholder="From"
           formatDate={(date) => date.toLocaleDateString()}
           dayPickerProps={{
-            selectedDays: [from, { from: from, to: to }],
+            selectedDays: [from, from && to && { from: from, to: to }],
             disabledDays: {
               // Server generate data up to 15 days before
               before: new Date(new Date(now).setDate(now.getDate() - 15)),
@@ -48,7 +48,7 @@ export const DateRangePicker: React.FC<{
           placeholder="To"
           formatDate={(date) => date.toLocaleDateString()}
           dayPickerProps={{
-            selectedDays: [from, { from: from, to: to }],
+            selectedDays: [from, from && to && { from: from, to: to }],
             disabledDays: {
               before: from,
               after: now,

@@ -50,7 +50,10 @@ function App() {
     p2p: number;
   }>({ cdn: 0, p2p: 0 });
 
-  const [dateFilter, setDateFilter] = React.useState(() => {
+  const [dateFilter, setDateFilter] = React.useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>(() => {
     const now = new Date(Date.now());
     const from = new Date(new Date(now).setDate(now.getDate() - 10));
     return {
@@ -64,6 +67,9 @@ function App() {
    * of making an extra http request.
    */
   React.useEffect(() => {
+    if (!dateFilter.from || !dateFilter.to) {
+      return;
+    }
     const from = dateFilter.from.getTime();
     const to = dateFilter.to.getTime();
     // Wait for both promises to resolve
@@ -183,7 +189,7 @@ function App() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <div style={{marginTop: 30, marginLeft: 30}}>
+      <div style={{ marginTop: 30, marginLeft: 30 }}>
         <DateRangePicker
           {...dateFilter}
           onFromDateChange={(from) => setDateFilter({ ...dateFilter, from })}
