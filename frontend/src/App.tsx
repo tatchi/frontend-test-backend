@@ -21,6 +21,12 @@ import { formatTimestamp, toGbps, formatGbps } from './utils';
 import { TooltipContent } from './TooltipContent';
 import { DateRangePicker } from './DateRangePicker';
 
+type AreaChartData = {
+  timestamp: number;
+  p2p: number;
+  cdn: number;
+}[];
+
 /** Does not display unit for the first item */
 const CustomYAxisTick: React.FC = (props: any) => {
   const { x, y, payload } = props;
@@ -37,6 +43,60 @@ const CustomYAxisTick: React.FC = (props: any) => {
         )}
       </text>
     </g>
+  );
+};
+
+const MaxCdnReferenceLine: React.FC<{ value: number }> = ({ value }) => {
+  return (
+    <ReferenceLine
+      y={toGbps(value)}
+      stroke="#B2125C"
+      strokeDasharray="5 3"
+      strokeWidth={2}
+    >
+      <Label position="insideLeft" dy={-10} fontSize={14}>
+        {`Maximum CDN contribution: ${formatGbps(toGbps(value))}`}
+      </Label>
+    </ReferenceLine>
+  );
+};
+
+const MaxP2pReferenceLine: React.FC<{ value: number }> = ({ value }) => {
+  return (
+    <ReferenceLine
+      y={toGbps(value)}
+      stroke="green"
+      strokeDasharray="5 3"
+      strokeWidth={2}
+      position="start"
+    >
+      <Label position="insideRight" dy={-10} fontSize={14}>
+        {`Maximum throughput: ${formatGbps(toGbps(value))}`}
+      </Label>
+    </ReferenceLine>
+  );
+};
+
+const Timeline: React.FC<{ data: AreaChartData }> = ({ data }) => {
+  return (
+    <Brush
+      width={400}
+      height={40}
+      dataKey="timestamp"
+      tickFormatter={formatTimestamp}
+      data={data}
+    >
+      <AreaChart width={400} height={300} data={data}>
+        <Area
+          type="monotone"
+          dataKey="p2p"
+          stackId="2"
+          stroke="#40A3D4"
+          strokeWidth={2}
+          fill="#6AB8DD"
+        />
+      </AreaChart>
+    </Brush>
   );
 };
 
@@ -95,7 +155,7 @@ function App() {
   /** Compute data in a way which is consumable by
    * the AreaChart
    */
-  const areaChartData = React.useMemo(() => {
+  const areaChartData = React.useMemo<AreaChartData>(() => {
     if (!bandwidth) return [];
     const { cdn, p2p } = bandwidth;
     return cdn.map(([timestamp, cdn], index) => {
@@ -145,47 +205,9 @@ function App() {
               strokeWidth={2}
               fill="#C54D85"
             />
-            <ReferenceLine
-              y={toGbps(maxBandwidth?.cdn)}
-              stroke="#B2125C"
-              strokeDasharray="5 3"
-              strokeWidth={2}
-            >
-              <Label position="insideLeft" dy={-10} fontSize={14}>
-                {`Maximum CDN contribution: ${formatGbps(
-                  toGbps(maxBandwidth?.cdn)
-                )}`}
-              </Label>
-            </ReferenceLine>
-            <ReferenceLine
-              y={toGbps(maxBandwidth?.p2p)}
-              stroke="green"
-              strokeDasharray="5 3"
-              strokeWidth={2}
-              position="start"
-            >
-              <Label position="insideRight" dy={-10} fontSize={14}>
-                {`Maximum throughput: ${formatGbps(toGbps(maxBandwidth?.p2p))}`}
-              </Label>
-            </ReferenceLine>
-            <Brush
-              width={400}
-              height={40}
-              dataKey="timestamp"
-              tickFormatter={formatTimestamp}
-              data={areaChartData}
-            >
-              <AreaChart width={400} height={300} data={areaChartData}>
-                <Area
-                  type="monotone"
-                  dataKey="p2p"
-                  stackId="2"
-                  stroke="#40A3D4"
-                  strokeWidth={2}
-                  fill="#6AB8DD"
-                />
-              </AreaChart>
-            </Brush>
+            {MaxCdnReferenceLine({ value: maxBandwidth.cdn })}
+            {MaxP2pReferenceLine({ value: maxBandwidth.p2p })}
+            {Timeline({ data: areaChartData })}
           </AreaChart>
         </ResponsiveContainer>
       </div>
