@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 
 // Settings
-const SERVER_PORT = 3000; // Listening port
+const SERVER_PORT = 3001; // Listening port
 const REQUEST_SUCCESS_RATE = 1; // Optional challenge: set this to have requests to backend randomly failing
 
 // Load data
